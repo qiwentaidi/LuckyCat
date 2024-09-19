@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lucky Cat</title>
+    <link href="./css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            padding-block: 20px;
+        }
+
+        .container {
+            margin: auto;
+            width: 500px;
+        }
+
+        .list-group {
+            margin-top: 20px;
+        }
+
+        .list-group-item {
+            position: relative;
+        }
+
+        .list-group-item p {
+            margin-bottom: 0;
+        }
+
+        .list-group-item span {
+            font-weight: bold;
+        }
+
+        #favicon {
+            display: block;
+            margin: 20px auto;
+        }
+
+        #headers {
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <img id="favicon" src="" width="32" height="32">
+        <ul class="list-group">
+            <li class="list-group-item"><p>icon_mdhash="<span id="md5Hash"></span>"</p></li>
+            <li class="list-group-item"><p>icon_hash="<span id="murmurHash"></span>"</p></li>
+            <li class="list-group-item"><p>server="<span id="server"></span>"</p></li>
+            <li class="list-group-item"><p>status="<span id="statusCode"></span>"</p></li>
+            <li class="list-group-item"><p>title=="<span id="pageTitle"></span>"</p></li>
+            <div class="card" style="margin-top: 10px;">
+                <div class="card-body">
+                    <h5 class="card-title">Complete Header</h5>
+                    <pre id="headers"></pre>
+                </div>
+            </div>
+        </ul>
+    </div>
+    <script src="popup.js"></script>
+    <script src="./libs/crypto-js/core.js"></script>
+    <script src="./libs/crypto-js/md5.js"></script>
+    <script src="./libs/murmurhash3.js"></script>
+</body>
+
+</html>
