@@ -49,15 +49,76 @@
     <div class="container">
         <img id="favicon" src="" width="32" height="32">
         <ul class="list-group">
-            <li class="list-group-item"><p>icon_mdhash="<span id="md5Hash"></span>"</p></li>
-            <li class="list-group-item"><p>icon_hash="<span id="murmurHash"></span>"</p></li>
-            <li class="list-group-item"><p>server="<span id="server"></span>"</p></li>
-            <li class="list-group-item"><p>status="<span id="statusCode"></span>"</p></li>
-            <li class="list-group-item"><p>title=="<span id="pageTitle"></span>"</p></li>
-            <div class="card" style="margin-top: 10px;">
-                <div class="card-body">
-                    <h5 class="card-title">Complete Header</h5>
-                    <pre id="headers"></pre>
+            <li class="list-group-item">
+                <p>icon_mdhash="<span id="md5Hash"></span>"</p>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <p>icon_hash="<span id="murmurHash"></span>"</p>
+                <button class="badge rounded-pill text-bg-primary" id="fofa-hash">FOFA</button>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <p>server="<span id="server"></span>"</p>
+                <button class="badge rounded-pill text-bg-primary" id="fofa-server">FOFA</button>
+            </li>
+            <li class="list-group-item">
+                <p>status="<span id="statusCode"></span>"</p>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <p>title="<span id="pageTitle"></span>"</p>
+                <button class="badge rounded-pill text-bg-primary" id="fofa-title">FOFA</button>
+            </li>
+            <div class="accordion" id="accordionExample" style="margin-top: 10px;">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                            Response Header
+                        </button>
+                    </h2>
+                    <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
+                        <div class="accordion-body">
+                            <pre id="response-headers"></pre>
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                            Request Header
+                        </button>
+                    </h2>
+                    <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                        <div class="accordion-body">
+                            <pre id="request-headers"></pre>
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                            Unpackaged JSLink
+                        </button>
+                    </h2>
+                    <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                        <div class="accordion-body">
+                            <pre id="jslink"></pre>
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                            Comments
+                        </button>
+                    </h2>
+                    <div id="collapseFour" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                        <div class="accordion-body">
+                            <pre id="comment"></pre>
+                        </div>
+                    </div>
                 </div>
             </div>
         </ul>
@@ -66,6 +127,7 @@
     <script src="./libs/crypto-js/core.js"></script>
     <script src="./libs/crypto-js/md5.js"></script>
     <script src="./libs/murmurhash3.js"></script>
+    <script src="./libs/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>

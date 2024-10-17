@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Lucky Cat",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "网站指纹自动提取插件",
     "icons": {
         "16": "./assets/images/icon16.png",
@@ -11,10 +11,16 @@
     },
     "permissions": [
         "tabs",
-        "activeTab"
+        "activeTab",
+        "webRequest",
+        "declarativeNetRequest",
+        "declarativeNetRequestWithHostAccess"
     ],
-    "action":{
-		"default_icon":"./assets/images/icon32.png",
-		"default_popup":"popup.html"
-	}
+    "action": {
+        "default_icon": "./assets/images/icon32.png",
+        "default_popup": "popup.html"
+    },
+    "host_permissions": [
+        "<all_urls>"
+    ]
 }
