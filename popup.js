@@ -125,7 +125,8 @@ async function processResponse() {
 
     let jslinks = extractJsLinks(bodyResult)
     document.getElementById('jslink').textContent = jslinks.join("\n");
-
+    let links = extractLinks(bodyResult)
+    document.getElementById('link').textContent = links.join("\n");
     const comments = extractComments(bodyResult);
     const allComments = []
     allComments.push(...Array.from(new Set(comments.htmlComments)))
@@ -245,7 +246,16 @@ function extractComments(content) {
     };
 }
 
-
+const linkRegex = /(?:"|')(((?:[a-zA-Z]{1,10}:\/\/|\/\/)[^"'/]{1,}\.[a-zA-Z]{2,}[^"']*?)|((?:\/|\.\.\/|\.\.\/)[^"'><,;|*()$^/\\\[\]][^"'><,;|()]{1,})|([a-zA-Z0-9_\-\/]{1,}\/[a-zA-Z0-9_\-\/]{1,}\.(?:[a-zA-Z]{1,4}|action)(?:[\?#][^"']*?)?)|([a-zA-Z0-9_\-\/]{1,}\/[a-zA-Z0-9_\-\/]{3,}(?:[\?#][^"']*?)?)|([a-zA-Z0-9_\-]{1,}\.\w+(?:[\?#][^"']*?)?))(?:"|')/g;
+function extractLinks(htmlContent) {
+    const links = [];
+    const matches = htmlContent.match(linkRegex);
+    if (matches) {
+        links.push(...matches);
+    }
+    // links 去重
+    return [...new Set(links)];
+}
 
 
 // 页面加载时运行
@@ -265,16 +275,16 @@ document.getElementById('fofa-title').addEventListener('click', function() {
     LocationFofa("title")
 });
 
-chrome.webRequest.onBeforeSendHeaders.addListener(
-    function(details) {
-        let headersText = '';
-        details.requestHeaders.forEach(header => {
-            headersText += `${header.name}: ${header.value}\n`;
-        });
+// chrome.webRequest.onBeforeSendHeaders.addListener(
+//     function(details) {
+//         let headersText = '';
+//         details.requestHeaders.forEach(header => {
+//             headersText += `${header.name}: ${header.value}\n`;
+//         });
         
-        // Display the formatted headers in the HTML element with the id 'request-headers'
-        document.getElementById('request-headers').textContent = headersText;
-    },
-    { urls: ["<all_urls>"] }, // Capture requests to all URLs
-    ["requestHeaders"]
-);
+//         // Display the formatted headers in the HTML element with the id 'request-headers'
+//         document.getElementById('request-headers').textContent = headersText;
+//     },
+//     { urls: ["<all_urls>"] }, // Capture requests to all URLs
+//     ["requestHeaders"]
+// );
