@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <title>后台登录 - Monsta FTP</title>
+    <meta name="generator" content="WordPress 6.4.2">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/wp-content/themes/demo/style.css">
+</head>
+<body>
+<!--STATUS OK-->
+<div id="app">
+    <h1>后台登录</h1>
+    <p>wp-content/plugins/optinmonster</p>
+    <p>safedog</p>
+    <p>pma_servername</p>
+    <p>Powered by <a href="http://www.monstaftp.com" target="_blank">Monsta FTP</a> v=1.2.3</p>
+    <p>技术支持：某某科技有限公司</p>
+    <p>京ICP备12345678号-1</p>
+    <p>© 2024 某某科技有限公司 版权所有</p>
+    <form action="/api/login" method="post">
+        <input name="username" autocomplete="username">
+        <input name="password" type="password">
+        <button type="submit">登录</button>
+    </form>
+    <a href="/api/user/info">/api/user/info</a>
+    <a href="/static/js/app.js">app.js</a>
+</div>
+<script src="/static/js/app.js"></script>
+<script>
+    window.__APP_CONFIG__ = { env: "test", version: "1.2.3" };
+</script>
+</body>
+</html>

@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lucky Cat · 规则提取器 · 设计方案 v1</title>
+<style>
+    :root {
+        --bg: #eef0f4;
+        --surface: #ffffff;
+        --surface-2: #fafbfc;
+        --line: #e6e8ec;
+        --line-strong: #d8dce2;
+        --text: #1b1f24;
+        --muted: #6b7280;
+        --faint: #9aa1ab;
+        --accent: #2f6bff;
+        --accent-soft: #eef3ff;
+        --green: #15803d;
+        --green-soft: #e9f5ee;
+        --amber: #b45309;
+        --amber-soft: #fdf3e4;
+        --red: #b91c1c;
+        --red-soft: #fdecec;
+        --mono: 'JetBrains Mono', 'Noto Sans SC', ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    }
+
+    @font-face {
+        font-family: 'Inter';
+        src: url('../assets/fonts/Inter-400.woff2') format('woff2');
+        font-weight: 400;
+        font-display: swap;
+    }
+
+    @font-face {
+        font-family: 'Inter';
+        src: url('../assets/fonts/Inter-500.woff2') format('woff2');
+        font-weight: 500;
+        font-display: swap;
+    }
+
+    @font-face {
+        font-family: 'Inter';
+        src: url('../assets/fonts/Inter-600.woff2') format('woff2');
+        font-weight: 600;
+        font-display: swap;
+    }
+
+    @font-face {
+        font-family: 'JetBrains Mono';
+        src: url('../assets/fonts/JetBrainsMono-400.woff2') format('woff2');
+        font-weight: 400;
+        font-display: swap;
+    }
+
+    @font-face {
+        font-family: 'Noto Sans SC';
+        src: url('../assets/fonts/NotoSansSC-VF.woff2') format('woff2');
+        font-weight: 100 900;
+        font-display: swap;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+        margin: 0;
+        padding: 34px 36px 40px;
+        background:
+            radial-gradient(circle at 1px 1px, rgba(27, 31, 36, .06) 1px, transparent 0) 0 0 / 22px 22px,
+            var(--bg);
+        color: var(--text);
+        font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    .board-head {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 24px;
+        max-width: 1960px;
+        margin: 0 auto 22px;
+    }
+
+    .board-head h1 {
+        margin: 0 0 4px;
+        font-size: 22px;
+        letter-spacing: -.2px;
+    }
+
+    .board-head p {
+        margin: 0;
+        font-size: 12.5px;
+        color: var(--muted);
+    }
+
+    .legend {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        font-size: 11.5px;
+        color: var(--muted);
+    }
+
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+
+    .board {
+        display: flex;
+        gap: 30px;
+        max-width: 1960px;
+        margin: 0 auto;
+        align-items: flex-start;
+    }
+
+    .frame-wrap { width: 600px; flex: none; }
+
+    .frame-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 2px 8px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: .04em;
+        color: var(--muted);
+        text-transform: uppercase;
+    }
+
+    .frame-label b { color: var(--text); font-size: 11.5px; letter-spacing: 0; }
+
+    .frame-label .scope {
+        margin-left: auto;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: #fff;
+        border: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 500;
+        letter-spacing: 0;
+    }
+
+    .popup {
+        display: flex;
+        flex-direction: column;
+        width: 600px;
+        height: 600px;
+        background: var(--surface);
+        border: 1px solid #dfe3e8;
+        border-radius: 14px;
+        box-shadow: 0 18px 40px -18px rgba(20, 30, 50, .35), 0 2px 6px rgba(20, 30, 50, .06);
+        overflow: hidden;
+    }
+
+    /* top bar */
+    .p-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 8px 14px;
+        border-bottom: 1px solid var(--line);
+    }
+
+    .p-site { display: flex; align-items: center; gap: 10px; min-width: 0; }
+
+    .p-favicon {
+        width: 30px; height: 30px; flex: none;
+        display: grid; place-items: center;
+        background: #f1f3f6;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        overflow: hidden;
+    }
+
+    .p-favicon img { width: 22px; height: 22px; }
+
+    .p-host { font-size: 13px; font-weight: 650; line-height: 1.25; }
+    .p-title {
+        font-size: 10.5px; color: var(--muted); line-height: 1.3;
+        max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .p-top-right { display: flex; align-items: center; gap: 6px; }
+
+    .pill {
+        display: inline-flex; align-items: center; gap: 5px;
+        height: 22px; padding: 0 8px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--surface-2);
+        font-size: 10.5px; color: #374151;
+        white-space: nowrap;
+    }
+
+    .dot { width: 6px; height: 6px; border-radius: 50%; flex: none; }
+    .dot.green { background: #22a55b; box-shadow: 0 0 0 2px var(--green-soft); }
+    .dot.amber { background: #e08a13; box-shadow: 0 0 0 2px var(--amber-soft); }
+    .dot.red { background: #dc4c4c; box-shadow: 0 0 0 2px var(--red-soft); }
+    .dot.gray { background: #a3a9b3; box-shadow: 0 0 0 2px #f1f2f4; }
+
+    .icon-btn {
+        width: 26px; height: 26px; flex: none;
+        display: grid; place-items: center;
+        border: 1px solid transparent;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--muted);
+        font-size: 13px;
+        cursor: pointer;
+    }
+
+    .icon-btn:hover { background: #f2f4f7; border-color: var(--line); }
+
+    /* segments */
+    .segments {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        padding: 0 14px;
+        border-bottom: 1px solid var(--line);
+        background: var(--surface);
+    }
+
+    .seg {
+        position: relative;
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 9px 9px 8px;
+        border: 0; background: transparent;
+        font-size: 12px; color: var(--muted);
+        cursor: pointer;
+        font-family: inherit;
+    }
+
+    .seg.active { color: var(--text); font-weight: 650; }
+    .seg.active::after {
+        content: ""; position: absolute; left: 8px; right: 8px; bottom: -1px;
+        height: 2px; border-radius: 2px; background: var(--accent);
+    }
+
+    .seg-count {
+        min-width: 17px; height: 16px; padding: 0 5px;
+        display: inline-grid; place-items: center;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-size: 9.5px; font-weight: 650;
+    }
+
+    .seg-spring { flex: 1; }
+
+    /* body */
+    .p-body {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+        background: #fbfbfc;
+    }
+
+    .recommend {
+        margin: 8px 14px 0;
+        padding: 9px;
+        border: 1px solid #dbe4ff;
+        border-radius: 10px;
+        background: linear-gradient(180deg, #f7f9ff 0%, #ffffff 70%);
+    }
+
+    .rec-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .rec-kicker { font-size: 11px; font-weight: 700; letter-spacing: .02em; }
+    .rec-reason { font-size: 10.5px; color: var(--muted); }
+
+    .badge {
+        display: inline-flex; align-items: center; gap: 4px;
+        height: 18px; padding: 0 7px;
+        border-radius: 5px;
+        font-size: 9.5px; font-weight: 600;
+        border: 1px solid transparent;
+    }
+
+    .badge.green { background: var(--green-soft); color: var(--green); border-color: #cfe9d9; }
+    .badge.amber { background: var(--amber-soft); color: var(--amber); border-color: #f1dfbf; }
+    .badge.gray { background: #f2f4f6; color: #5b6472; border-color: var(--line); }
+    .badge.blue { background: var(--accent-soft); color: var(--accent); border-color: #d5e0ff; }
+
+    .cond-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+
+    .cond {
+        display: inline-flex; align-items: center; gap: 6px;
+        max-width: 100%;
+        padding: 3px 7px;
+        border: 1px solid #e2e8f5;
+        border-radius: 6px;
+        background: #fff;
+        font-family: var(--mono);
+        font-size: 10px;
+        color: #26303d;
+    }
+
+    .cond code { font-family: inherit; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .rule-preview {
+        margin-top: 8px;
+        padding: 6px 8px;
+        border-radius: 6px;
+        background: #101827;
+        color: #c9d6ff;
+        font-family: var(--mono);
+        font-size: 9px;
+        line-height: 1.5;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .rec-actions { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+
+    .btn {
+        height: 27px; padding: 0 12px;
+        border-radius: 7px;
+        border: 1px solid transparent;
+        font-family: inherit; font-size: 12px; font-weight: 600;
+        cursor: pointer;
+        display: inline-flex; align-items: center; gap: 6px;
+        white-space: nowrap;
+    }
+
+    .btn.primary { background: var(--accent); color: #fff; box-shadow: 0 2px 6px rgba(47, 107, 255, .25); }
+    .btn.ghost { background: #fff; border-color: var(--line-strong); color: #374151; }
+    .btn.small { height: 25px; padding: 0 10px; font-size: 11px; font-weight: 500; }
+    .btn.link { background: transparent; border: 0; color: var(--accent); padding: 0 2px; height: auto; font-weight: 500; }
+
+    .ok-note { margin-left: auto; font-size: 10px; color: var(--green); display: inline-flex; align-items: center; gap: 4px; }
+
+    /* filters */
+    .filterbar { padding: 9px 14px 6px; }
+
+    .search {
+        display: flex; align-items: center; gap: 7px;
+        height: 29px; padding: 0 9px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: #fff;
+    }
+
+    .search svg { flex: none; color: var(--faint); }
+    .search input {
+        flex: 1; min-width: 0;
+        border: 0; outline: 0; background: transparent;
+        font-family: inherit; font-size: 11.5px; color: var(--text);
+    }
+    .search input::placeholder { color: var(--faint); }
+
+    .filterchips { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+
+    .chip {
+        display: inline-flex; align-items: center; gap: 4px;
+        height: 22px; padding: 0 8px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: #fff;
+        font-size: 10px; color: var(--muted);
+    }
+
+    .chip.active { background: #eef2ff; border-color: #d5ddff; color: #31479b; font-weight: 600; }
+    .chip.ghost { border-style: dashed; color: var(--faint); }
+
+    /* candidates */
+    .cand-scroll {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 2px 14px 10px;
+        mask-image: linear-gradient(to bottom, #000 calc(100% - 14px), transparent 100%);
+    }
+
+    .group-head {
+        display: flex; align-items: center; gap: 6px;
+        padding: 7px 2px 3px;
+        font-size: 9.5px; font-weight: 700; letter-spacing: .08em;
+        color: var(--faint);
+        text-transform: uppercase;
+    }
+
+    .group-head em {
+        font-style: normal; font-weight: 600; letter-spacing: 0;
+        color: #b6bcc6;
+    }
+
+    .cand {
+        display: flex; align-items: flex-start; gap: 9px;
+        margin: 0 -6px;
+        padding: 6px 6px;
+        border-radius: 7px;
+        cursor: pointer;
+    }
+
+    .cand + .cand { border-top: 1px solid #f1f3f5; border-radius: 0; margin-top: 0; }
+
+    .cand.selected { background: var(--accent-soft); border-top-color: transparent; box-shadow: inset 2px 0 0 var(--accent); }
+
+    .cand input {
+        width: 13px; height: 13px; margin: 2px 0 0;
+        accent-color: var(--accent);
+        flex: none;
+    }
+
+    .cand-main { flex: 1; min-width: 0; }
+
+    .cand-value {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        color: #1f2937;
+        line-height: 1.45;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .cand-meta {
+        margin-top: 2px;
+        font-size: 9.5px; color: var(--faint);
+        display: flex; align-items: center; gap: 5px;
+        white-space: nowrap; overflow: hidden;
+    }
+
+    .conf {
+        flex: none;
+        margin-top: 1px;
+        height: 17px; padding: 0 6px;
+        display: inline-grid; place-items: center;
+        border-radius: 4px;
+        font-size: 9px; font-weight: 600;
+    }
+
+    .conf.high { background: var(--green-soft); color: var(--green); }
+    .conf.mid { background: var(--amber-soft); color: var(--amber); }
+    .conf.low { background: #f2f4f6; color: #6b7280; }
+
+    .scope {
+        display: inline-block;
+        padding: 0 4px;
+        border-radius: 3px;
+        font-size: 8.5px;
+        font-weight: 600;
+        line-height: 1.5;
+    }
+
+    .scope.product { background: #e8efff; color: #2f4fae; }
+    .scope.deploy { background: #eef0f3; color: #5b6472; }
+    .scope.generic { background: #f3f4f6; color: #8a919c; }
+
+    .fofa-chip {
+        margin-left: auto;
+        padding: 1px 5px;
+        border-radius: 4px;
+        border: 1px solid #d5e0ff;
+        background: #f4f7ff;
+        color: var(--accent);
+        font-size: 8.5px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .k-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+
+    .tag-version {
+        padding: 0 4px;
+        border-radius: 3px;
+        background: var(--accent-soft);
+        color: #3556c7;
+        font-size: 8.5px;
+        font-family: var(--mono);
+    }
+
+    /* footer */
+    .p-footer {
+        display: flex; align-items: center; justify-content: space-between; gap: 10px;
+        padding: 8px 14px;
+        border-top: 1px solid var(--line);
+        background: #fff;
+    }
+
+    .sel-line { display: flex; align-items: center; gap: 7px; font-size: 10.5px; color: var(--muted); }
+    .sel-line b { color: var(--text); font-size: 12px; }
+
+    .foot-actions { display: flex; align-items: center; gap: 8px; }
+
+    /* diagnostics frame */
+    .diag-body { flex: 1; min-height: 0; overflow-y: auto; padding: 12px 14px 14px; }
+
+    .sec-title {
+        display: flex; align-items: center; gap: 6px;
+        margin: 4px 0 7px;
+        font-size: 9.5px; font-weight: 700; letter-spacing: .08em;
+        color: var(--faint); text-transform: uppercase;
+    }
+
+    .site-card {
+        display: flex; align-items: center; gap: 10px;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: #fff;
+    }
+
+    .site-card .icon-40 {
+        width: 36px; height: 36px; border-radius: 8px;
+        display: grid; place-items: center;
+        background: #f1f3f6; border: 1px solid var(--line);
+    }
+
+    .site-card .icon-40 img { width: 26px; height: 26px; }
+
+    .kv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 8px; }
+
+    .kv {
+        padding: 7px 9px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: #fff;
+        min-width: 0;
+    }
+
+    .kv .k { font-size: 9px; color: var(--faint); letter-spacing: .02em; }
+    .kv .v {
+        margin-top: 2px;
+        font-family: var(--mono); font-size: 10px; color: #26303d;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .kv.span-2 { grid-column: span 2; }
+
+    .disclosure {
+        display: flex; align-items: center; gap: 8px;
+        width: 100%;
+        padding: 9px 2px;
+        border: 0; border-bottom: 1px solid var(--line);
+        background: transparent;
+        font-family: inherit; font-size: 11px; color: #303845;
+        cursor: pointer;
+    }
+
+    .disclosure .count { color: var(--faint); font-size: 10px; }
+    .disclosure .chev { margin-left: auto; color: var(--faint); }
+
+    .pre-block {
+        margin: 8px 0 10px;
+        padding: 9px 10px;
+        border-radius: 7px;
+        background: #fff;
+        border: 1px solid var(--line);
+        font-family: var(--mono);
+        font-size: 9.5px;
+        line-height: 1.7;
+        color: #3b4452;
+        white-space: pre-wrap;
+        max-height: 132px;
+        overflow: hidden;
+    }
+
+    .switch-row {
+        display: flex; align-items: center; gap: 9px;
+        margin-top: 12px; padding: 9px 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+    }
+
+    .switch {
+        width: 28px; height: 16px; border-radius: 999px;
+        background: #dfe3e8; position: relative; flex: none;
+    }
+
+    .switch::after {
+        content: ""; position: absolute; top: 2px; left: 2px;
+        width: 12px; height: 12px; border-radius: 50%;
+        background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2);
+    }
+
+    .switch.on { background: var(--accent); }
+    .switch.on::after { left: 14px; }
+
+    .switch-text { font-size: 10.5px; color: #3b4452; }
+    .switch-text small { display: block; color: var(--faint); font-size: 9.5px; margin-top: 1px; }
+
+    .hint {
+        margin-top: 12px; padding: 8px 9px;
+        border-radius: 7px;
+        background: #fff8ec;
+        border: 1px solid #f3e2c4;
+        color: #8a5a12;
+        font-size: 9.5px; line-height: 1.6;
+    }
+
+    /* history frame */
+    .history-body { flex: 1; min-height: 0; overflow-y: auto; padding: 12px 14px; }
+
+    .hist-row {
+        display: flex; align-items: flex-start; gap: 9px;
+        padding: 10px 2px;
+        border-bottom: 1px solid var(--line);
+    }
+
+    .hist-main { flex: 1; min-width: 0; }
+    .hist-host { font-size: 11.5px; font-weight: 650; }
+    .hist-title { font-size: 9.5px; color: var(--muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hist-meta { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 9px; color: var(--faint); }
+
+    .hist-actions { display: flex; align-items: center; gap: 6px; }
+
+    .frame-caption {
+        margin: 9px 2px 0;
+        font-size: 10.5px;
+        line-height: 1.6;
+        color: var(--muted);
+    }
+
+    .frame-caption b { color: #374151; }
+</style>
+</head>
+<body>
+
+<header class="board-head">
+    <div>
+        <h1>Lucky Cat · 指纹规则提取器</h1>
+        <p>设计方案 v1 · 目标：打开弹窗后 30 秒内拿到一条「有依据、可复制」的规则</p>
+    </div>
+    <div class="legend">
+        <span><i class="dot green"></i>稳定</span>
+        <span><i class="dot amber"></i>未知</span>
+        <span><i class="dot red"></i>易变</span>
+        <span style="color:#9aa1ab">|</span>
+        <span>600 × 600 popup · Chrome 上限</span>
+    </div>
+</header>
+
+<main class="board">
+
+    <!-- ================= 01 rules ================= -->
+    <section class="frame-wrap">
+        <div class="frame-label"><b>01 · 规则</b> 默认页 <span class="scope">P0</span></div>
+        <div class="popup">
+            <div class="p-top">
+                <div class="p-site">
+                    <span class="p-favicon"><img src="../assets/images/icon32.png" alt=""></span>
+                    <div style="min-width:0">
+                        <div class="p-host">127.0.0.1:8899</div>
+                        <div class="p-title">后台登录 - Monsta FTP</div>
+                    </div>
+                </div>
+                <div class="p-top-right">
+                    <span class="pill"><i class="dot green"></i>200 · nginx/1.24.0</span>
+                    <button class="icon-btn" title="重新提取">⟳</button>
+                </div>
+            </div>
+
+            <nav class="segments">
+                <button class="seg active">规则<span class="seg-count">22</span></button>
+                <button class="seg">诊断</button>
+                <button class="seg">历史</button>
+                <span class="seg-spring"></span>
+                <button class="icon-btn" title="设置">⚙</button>
+            </nav>
+
+            <div class="p-body">
+                <section class="recommend">
+                    <div class="rec-top">
+                        <span class="rec-kicker">推荐规则</span>
+                        <span class="badge blue">产品级</span>
+                        <span class="badge green">置信度高</span>
+                        <span class="rec-reason">WordPress 核心目录标记，跨站点通用</span>
+                    </div>
+                    <div class="cond-list">
+                        <span class="cond"><i class="dot green"></i><code>body="wp-content"</code></span>
+                    </div>
+                    <div class="rule-preview">body="wp-content"</div>
+                    <div class="rec-actions">
+                        <button class="btn primary">复制规则</button>
+                        <button class="btn ghost">换一条</button>
+                        <button class="btn ghost">FOFA 验证</button>
+                        <span class="ok-note">✓ 语法合法 · 当前页命中</span>
+                    </div>
+                </section>
+
+                <div class="filterbar">
+                    <label class="search">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+                        <input placeholder="过滤候选：cookie / icp / 路径">
+                    </label>
+                    <div class="filterchips">
+                        <span class="chip active">全部 22</span>
+                        <span class="chip">稳定 21</span>
+                        <span class="chip">易变 1</span>
+                        <span class="chip ghost">只看高置信度</span>
+                    </div>
+                </div>
+
+                <div class="cand-scroll">
+                    <div class="group-head">页面特征 <em>14</em></div>
+                    <label class="cand selected">
+                        <input type="checkbox" checked>
+                        <div class="cand-main">
+                            <div class="cand-value">body="wp-content"</div>
+                            <div class="cand-meta"><span>WordPress 标记</span>·<span>稳定</span>·<span class="scope product">产品级</span>·<span>出现 4 次</span></div>
+                        </div>
+                        <span class="conf high">高</span>
+                    </label>
+                    <label class="cand">
+                        <input type="checkbox">
+                        <div class="cand-main">
+                            <div class="cand-value">body="wordpress 6.4.2"</div>
+                            <div class="cand-meta"><span>meta generator</span>·<span>稳定</span>·<span class="scope product">产品级</span>·<span class="tag-version">version</span></div>
+                        </div>
+                        <span class="conf mid">中</span>
+                    </label>
+                    <label class="cand">
+                        <input type="checkbox">
+                        <div class="cand-main">
+                            <div class="cand-value">body="/wp-content/plugins/optinmonster/app.js"</div>
+                            <div class="cand-meta"><span>路径 / 资源</span>·<span>稳定</span>·<span class="scope product">产品级</span>·<span>路径偏具体</span></div>
+                        </div>
+                        <span class="conf mid">中</span>
+                    </label>
+                    <label class="cand">
+                        <input type="checkbox">
+                        <div class="cand-main">
+                            <div class="cand-value">body="京icp备12345678号-1"</div>
+                            <div class="cand-meta"><span>ICP 备案号</span>·<span>稳定</span>·<span class="scope deploy">部署级</span>·<span>站点独有</span></div>
+                        </div>
+                        <span class="conf high">高</span>
+                    </label>
+
+                    <div class="group-head">图标 <em>2</em></div>
+                    <label class="cand">
+                        <input type="checkbox">
+                        <div class="cand-main">
+                            <div class="cand-value">icon_hash="-312450918"</div>
+                            <div class="cand-meta"><span>favicon mmh3</span>·<span>稳定</span>·<span class="scope deploy">部署级</span>·<span>仅当前站点</span></div>
+                        </div>
+                        <span class="conf high">高</span>
+                    </label>
+
+                    <div class="group-head">响应头 <em>5</em></div>
+                    <label class="cand">
+                        <input type="checkbox">
+                        <div class="cand-main">
+                            <div class="cand-value">header="set-cookie: safedog-flow-item="</div>
+                            <div class="cand-meta"><span>Cookie 名</span>·<span>稳定</span>·<span class="scope deploy">部署级</span>·<span>站点独有</span></div>
+                        </div>
+                        <span class="conf high">高</span>
+                    </label>
+                    <label class="cand">
+                        <input type="checkbox">
+                        <div class="cand-main">
+                            <div class="cand-value">header="x-powered-by: php/7.4.33"</div>
+                            <div class="cand-meta"><span>X-Powered-By</span>·<span>稳定</span>·<span class="scope generic">通用</span>·<span>覆盖面大</span></div>
+                        </div>
+                        <span class="conf mid">中</span>
+                    </label>
+                    <label class="cand">
+                        <input type="checkbox">
+                        <div class="cand-main">
+                            <div class="cand-value">server="nginx/1.24.0"</div>
+                            <div class="cand-meta"><span>Server</span>·<span>稳定</span>·<span class="scope generic">通用</span>·<span>区分度低</span></div>
+                        </div>
+                        <span class="conf low">低</span>
+                    </label>
+                </div>
+            </div>
+                </div>
+            </div>
+
+            <div class="p-footer">
+                <div class="sel-line"><b>已选 1 条</b><i class="dot green"></i>产品级<span style="color:#c5cad3">|</span>建议单条使用</div>
+                <div class="foot-actions">
+                    <button class="btn link">清空</button>
+                    <button class="btn primary">复制规则</button>
+                </div>
+            </div>
+        </div>
+        <p class="frame-caption"><b>变化：</b>推荐一条产品级条件，不做自动组合；候选按「产品级 / 部署级 / 通用」标注；组合需手动选择并提示收窄。</p>
+    </section>
+
+    <!-- ================= 02 diagnostics ================= -->
+    <section class="frame-wrap">
+        <div class="frame-label"><b>02 · 诊断</b> 原始数据 <span class="scope">P0</span></div>
+        <div class="popup">
+            <div class="p-top">
+                <div class="p-site">
+                    <span class="p-favicon"><img src="../assets/images/icon32.png" alt=""></span>
+                    <div style="min-width:0">
+                        <div class="p-host">127.0.0.1:8899</div>
+                        <div class="p-title">后台登录 - Monsta FTP</div>
+                    </div>
+                </div>
+                <div class="p-top-right">
+                    <span class="pill"><i class="dot green"></i>200 · nginx/1.24.0</span>
+                    <button class="icon-btn" title="重新提取">⟳</button>
+                </div>
+            </div>
+
+            <nav class="segments">
+                <button class="seg">规则<span class="seg-count">22</span></button>
+                <button class="seg active">诊断</button>
+                <button class="seg">历史</button>
+                <span class="seg-spring"></span>
+                <button class="icon-btn" title="设置">⚙</button>
+            </nav>
+
+            <div class="diag-body">
+                <div class="sec-title">站点字段</div>
+                <div class="kv-grid">
+                    <div class="kv span-2">
+                        <div class="k">favicon MD5</div>
+                        <div class="v">29c4ea79f74a183267b8064a7d61f821</div>
+                    </div>
+                    <div class="kv">
+                        <div class="k-row"><div class="k">icon_hash（mmh3）</div><span class="fofa-chip">FOFA</span></div>
+                        <div class="v">-312450918</div>
+                    </div>
+                    <div class="kv">
+                        <div class="k">HTTP 状态</div>
+                        <div class="v">200</div>
+                    </div>
+                    <div class="kv">
+                        <div class="k-row"><div class="k">Server</div><span class="fofa-chip">FOFA</span></div>
+                        <div class="v">nginx/1.24.0</div>
+                    </div>
+                    <div class="kv">
+                        <div class="k">Content-Type</div>
+                        <div class="v">text/html</div>
+                    </div>
+                </div>
+
+                <div class="sec-title" style="margin-top:14px">原始数据</div>
+                <button class="disclosure">
+                    <span>响应头</span><span class="count">10</span>
+                    <span class="chev">⌃</span>
+                </button>
+                <div class="pre-block">content-type: text/html; charset=utf-8
+server: nginx/1.24.0
+x-powered-by: PHP/7.4.33
+set-cookie: safedog-flow-item=abc123; Path=/; HttpOnly
+cache-control: no-cache
+date: Thu, 22 Oct 2026 09:20:27 GMT</div>
+                <button class="disclosure"><span>链接与 API</span><span class="count">14</span><span class="chev">⌄</span></button>
+                <button class="disclosure"><span>JS 链接</span><span class="count">3</span><span class="chev">⌄</span></button>
+                <button class="disclosure"><span>HTML 注释</span><span class="count">2</span><span class="chev">⌄</span></button>
+
+                <div class="switch-row">
+                    <span class="switch"></span>
+                    <span class="switch-text">加载页面 JS<small>用于 js_body 条件与 JS 全局变量提取</small></span>
+                </div>
+
+                <div class="hint">浏览器无法读取 TLS 证书与 TCP banner，依赖 cert / banner 的条件在这里不可用。</div>
+            </div>
+
+            <div class="p-footer">
+                <div class="sel-line"><span>诊断信息不参与规则组合</span></div>
+                <div class="foot-actions">
+                    <button class="btn ghost small">复制全部字段</button>
+                </div>
+            </div>
+        </div>
+        <p class="frame-caption"><b>变化：</b>原始信息降级到第二层；icon_hash、Server 等字段保留 FOFA 跳转。</p>
+    </section>
+
+    <!-- ================= 03 history ================= -->
+    <section class="frame-wrap">
+        <div class="frame-label"><b>03 · 历史</b> 复用上次结果 <span class="scope">P1</span></div>
+        <div class="popup">
+            <div class="p-top">
+                <div class="p-site">
+                    <span class="p-favicon"><img src="../assets/images/icon32.png" alt=""></span>
+                    <div style="min-width:0">
+                        <div class="p-host">127.0.0.1:8899</div>
+                        <div class="p-title">后台登录 - Monsta FTP</div>
+                    </div>
+                </div>
+                <div class="p-top-right">
+                    <span class="pill"><i class="dot green"></i>200 · nginx/1.24.0</span>
+                    <button class="icon-btn" title="重新提取">⟳</button>
+                </div>
+            </div>
+
+            <nav class="segments">
+                <button class="seg">规则<span class="seg-count">22</span></button>
+                <button class="seg">诊断</button>
+                <button class="seg active">历史</button>
+                <span class="seg-spring"></span>
+                <button class="icon-btn" title="设置">⚙</button>
+            </nav>
+
+            <div class="history-body">
+                <label class="search">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+                    <input placeholder="搜索域名、标题或条件">
+                </label>
+                <div class="filterchips" style="margin:8px 0 10px">
+                    <span class="chip active">最近 20 条</span>
+                    <span class="chip">仅稳定</span>
+                    <span class="chip">待复检 1</span>
+                </div>
+
+                <div class="hist-row">
+                    <span class="p-favicon" style="width:26px;height:26px"><img src="../assets/images/icon32.png" alt="" style="width:18px;height:18px"></span>
+                    <div class="hist-main">
+                        <div class="hist-host">127.0.0.1:8899</div>
+                        <div class="hist-title">后台登录 - Monsta FTP</div>
+                        <div class="hist-meta"><i class="dot green"></i>稳定<span>·</span>3 条条件<span>·</span>刚刚</div>
+                    </div>
+                    <div class="hist-actions">
+                        <button class="btn ghost small">复用</button>
+                    </div>
+                </div>
+
+                <div class="hist-row">
+                    <span class="p-favicon" style="width:26px;height:26px"><img src="../assets/images/icon32.png" alt="" style="width:18px;height:18px"></span>
+                    <div class="hist-main">
+                        <div class="hist-host">admin.example.com</div>
+                        <div class="hist-title">运维管理平台</div>
+                        <div class="hist-meta"><i class="dot green"></i>稳定<span>·</span>4 条条件<span>·</span>昨天 18:42</div>
+                    </div>
+                    <div class="hist-actions">
+                        <button class="btn ghost small">复用</button>
+                    </div>
+                </div>
+
+                <div class="hist-row">
+                    <span class="p-favicon" style="width:26px;height:26px"><img src="../assets/images/icon32.png" alt="" style="width:18px;height:18px"></span>
+                    <div class="hist-main">
+                        <div class="hist-host">10.0.0.12:8080</div>
+                        <div class="hist-title">Nacos Console</div>
+                        <div class="hist-meta"><i class="dot amber"></i>待复检<span>·</span>2 条条件<span>·</span>3 天前</div>
+                    </div>
+                    <div class="hist-actions">
+                        <button class="btn ghost small">复用</button>
+                    </div>
+                </div>
+
+                <div class="hist-row">
+                    <span class="p-favicon" style="width:26px;height:26px"><img src="../assets/images/icon32.png" alt="" style="width:18px;height:18px"></span>
+                    <div class="hist-main">
+                        <div class="hist-host">shop.example.cn</div>
+                        <div class="hist-title">商家后台</div>
+                        <div class="hist-meta"><i class="dot green"></i>稳定<span>·</span>2 条条件<span>·</span>上周三</div>
+                    </div>
+                    <div class="hist-actions">
+                        <button class="btn ghost small">复用</button>
+                    </div>
+                </div>
+
+                <div class="hint" style="margin-top:14px">历史只保存在本地浏览器，不上传；「复用」会恢复当时的候选选择，方便隔几天回来复检。</div>
+            </div>
+
+            <div class="p-footer">
+                <div class="sel-line">共 4 条记录</div>
+                <div class="foot-actions">
+                    <button class="btn link">清空历史</button>
+                </div>
+            </div>
+        </div>
+        <p class="frame-caption"><b>变化：</b>把一次性提取变成可复用资产；「待复检」标记帮助用户回访验证规则是否还成立。</p>
+    </section>
+
+</main>
+
+</body>
+</html>

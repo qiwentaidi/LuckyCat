@@ -1,1 +1,4 @@
 /.DS_Store
+.chrome-profile/
+tests/artifacts/
+tests/harness.html
