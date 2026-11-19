@@ -345,6 +345,7 @@
         .group-head em { font-style: normal; font-weight: 600; letter-spacing: 0; color: #b6bcc6; }
 
         .cand {
+            position: relative;
             display: flex; align-items: flex-start; gap: 9px;
             min-width: 0;
             padding: 6px 6px;
@@ -355,7 +356,16 @@
         .cand + .cand { border-top: 1px solid #f1f3f5; border-radius: 0; }
 
         .cand.recommended { background: #f7f9ff; }
-        .cand.selected { background: var(--accent-soft); border-top-color: transparent; box-shadow: inset 2px 0 0 var(--accent); }
+        .cand.selected { background: var(--accent-soft); border-top-color: transparent; }
+        .cand.selected::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--accent);
+        }
 
         .cand input[type="checkbox"] {
             width: 13px; height: 13px; margin: 2px 0 0;
